@@ -7,6 +7,8 @@ v1Router.use("/short-url",URLRouter);
 
 v1Router.use('/auth',AuthRouter);
 
+v1Router.use('/user/uls',URLRouter);
+
 module.exports = {
     v1Router
 }

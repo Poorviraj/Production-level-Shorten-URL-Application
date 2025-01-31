@@ -6,13 +6,22 @@ const {
 } = require('../services/urlService');
 require('dotenv').config();
 
+const jwt = require('jsonwebtoken');
+
+const geoip = require('geoip-lite');
 
 const NODE_ENV = process.env.NODE_ENV;
 
 const PORT = process.env[`${NODE_ENV}_PORT`]
 
+const JWT_SECRET_KEY = process.env[`${NODE_ENV}_JWT_SECRET_KEY`]
+
 const CreateNewURLController = async(req,res) => {
     try{
+
+        const userId = req.userId;
+
+
         const {originalURL} = req.body;
 
         if(!originalURL){
@@ -23,7 +32,7 @@ const CreateNewURLController = async(req,res) => {
 
         const keyId = generateUniqueIdforURLUtil(6);
 
-        const CreateNewURLServiceResult = await CreateNewUrlService(originalURL, keyId);
+        const CreateNewURLServiceResult = await CreateNewUrlService(originalURL, keyId, userId);
 
         if(!CreateNewURLServiceResult || !CreateNewURLServiceResult.success){
             const err = new Error('Unable to create new URL');
@@ -52,6 +61,14 @@ const CreateNewURLController = async(req,res) => {
 
 const RedirectURLController = async(req,res) => {
     try{
+
+        const ip = req.ip;
+        const geo = geoip.lookup(ip);
+
+        const {country, region} = geo;
+
+
+
         const {keyId} = req.params
         if(!keyId){
             return res.status(400).json({
@@ -85,7 +102,14 @@ const RedirectURLController = async(req,res) => {
             })
         }
 
-        await UpdateTheClickedCountOfURLByOneUsing_IdService(_id);
+        const  UpdateTheClickedCountOfURLByOneUsing_IdServiceResult =  await UpdateTheClickedCountOfURLByOneUsing_IdService(_id,geo?.country,geo?.region);
+
+        if(!UpdateTheClickedCountOfURLByOneUsing_IdServiceResult.success){
+            return res.status(400).json({
+                success: false,
+                message: "error in updating clicked count and other things"
+            })       
+        }
 
         res.redirect(originalURL);
 

@@ -1,13 +1,14 @@
 const URLSModel = require('./../models/urls.model')
 
 
-async function CreateNewUrlService(originalURL, keyId){
+async function CreateNewUrlService(originalURL, keyId, userId){
     try{
 
         // console.log("success here1");
         const result = await URLSModel.create({
             "originalURL": originalURL,
-            "KeyId": keyId
+            "KeyId": keyId,
+            "userId": userId
         })
         // console.log("success here");
 
@@ -49,12 +50,17 @@ async function GetURLDetailsUsingItsKeyIdService(keyId){
     }
 }
 
-async function UpdateTheClickedCountOfURLByOneUsing_IdService(mongoId){
+async function UpdateTheClickedCountOfURLByOneUsing_IdService(mongoId,country,region){
     try{
         const result = await URLSModel.findById(mongoId);
 
         
         result.ClickedCount = result.ClickedCount + 1;
+
+        result.openedAtTimestamp = result.openedAtTimestamp.push(new Date().getDate());
+
+
+        result.oprnedAtLocation = result.oprnedAtLocation.push(`${country} - ${region}`);
         
         console.log(result.ClickedCount);
         
@@ -71,8 +77,31 @@ async function UpdateTheClickedCountOfURLByOneUsing_IdService(mongoId){
     }
 }
 
+async function GetURLDetailsUsingItsUserIdService(userId){
+    try{
+
+        const URLDetails = await URLSModel.find({userId: userId})
+
+        if(!URLDetails) {
+            throw new Error(`unable to fetch details from this ${keyId}`);
+        }
+
+        return {
+            success: true,
+            data: URLDetails
+        }
+
+    } catch(err){
+        console.log(`Error in GetURLDetailsUsingItsKeyIdService with err : ${err}`);
+        return {
+            success: false
+        }
+    }
+}
+
 module.exports = {
     CreateNewUrlService,
     GetURLDetailsUsingItsKeyIdService,
-    UpdateTheClickedCountOfURLByOneUsing_IdService
+    UpdateTheClickedCountOfURLByOneUsing_IdService,
+    GetURLDetailsUsingItsUserIdService
 };

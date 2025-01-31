@@ -2,6 +2,13 @@ const { CheckEmailDomainIsPersonalOrNotUtil } = require('../utils/auth.utils');
 const { isUserPresentUsingEmailService, CreateNewUserService } = require('../services/userService');
 const { IsOrganizayionPresentUsingOrgDomainService, CreateNewOrganizationService } = require('../services/organizationService');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
+require('dotenv').config();
+
+const NODE_ENV = process.env.NODE_ENV;
+
+const JWT_SECRET_KEY = process.env[`${NODE_ENV}_JWT_SECRET_KEY`]
 
 const SignupController = async (req, res) => {
     try {
@@ -117,9 +124,65 @@ const SignupController = async (req, res) => {
 
 const SigninController = async (req, res) => {
     try {
+        const {email, password} = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required"
+            })
+        }
+
+        if (!password) {
+            return res.status(400).json({
+                success: false,
+                message: "password is required"
+            })
+        }
+
+        const isUserPresentUsingEmailServiceResult = await isUserPresentUsingEmailService(email);
+
+        if (!isUserPresentUsingEmailServiceResult.success) {
+            return res.status(400).json({
+                success: false,
+                message: "User is not present with this email, Invalid Email"
+            })
+        }
+
+        const {fullName, email: emailInDB, password: passwordInDB, organizationId, _id} = isUserPresentUsingEmailServiceResult.data;
+
+        const passwordCheck = await bcrypt.compare(password,passwordInDB);
+
+        if(!passwordCheck){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid Password"
+            })
+        }
+
+        // generate token for the user, and return back the token to the user
+
+        const payload = {
+            userId: _id
+        }
+
+        const token = await jwt.sign(payload,JWT_SECRET_KEY, {
+            expiresIn: '1h'
+        })
+
+        return res.status(200).json({
+            success: true,
+            message: "User Signed In Successfully",
+            token: token
+        })
 
     } catch (error) {
-
+        console.log(`error in SigninController with error :- ${error}`);
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error
+        })
     }
 }
 
