@@ -23,10 +23,10 @@ const isUserPresentUsingEmailService = async (email) => {
     }
 }
 
-const CreateNewUserService = async (fullName, email, encryptedPassword, organizationId) => {
+const CreateNewUserService = async (fullName, email, encryptedPassword, organizationId, organizationRole) => {
     try {
 
-        const user = await USERSModel.create({ fullName: fullName, email: email, password: encryptedPassword, organizationId: organizationId })
+        const user = await USERSModel.create({ fullName: fullName, email: email, password: encryptedPassword, organizationId: organizationId, role: organizationRole })
 
         if (user) {
             return {
@@ -82,8 +82,37 @@ const findUserByItsUserId = async (userId) => {
     }
 }
 
+const deleteUserByUserIdService = async(userId) => {
+    try {
+
+        const user = await USERSModel.findByIdAndDelete(userId);
+
+        if(user){
+            return {
+                success: true,
+                message: "User deleted successfully",
+                data: user
+            }
+        } else{
+            return {
+                success: false,
+                message: "Error in deleteUserByUserIdService"
+            }
+        }
+
+    } catch (error) {
+        console.log(`Error in deleteUserByUserIdService with err : ${error}`)
+        return {
+            success: false,
+            message: "Error in deleteUserByUserIdService",
+            error: error.message
+        }
+    }
+}
+
 module.exports = {
     isUserPresentUsingEmailService,
     CreateNewUserService,
-    findUserByItsUserId
+    findUserByItsUserId,
+    deleteUserByUserIdService
 }

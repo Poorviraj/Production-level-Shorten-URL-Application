@@ -67,6 +67,7 @@ const SignupController = async (req, res) => {
 
             const organizationName = organizationDomain.split(".")[0].toUpperCase();
             let organizationId
+            let organizationRole = "ORG_MEMBER"
 
             const IsOrganizayionPresentUsingOrgDomainServiceResult = await IsOrganizayionPresentUsingOrgDomainService(organizationDomain);
 
@@ -81,12 +82,13 @@ const SignupController = async (req, res) => {
                     })
                 }
                 organizationId = CreateNewOrganizationServiceResult.data._id;
+                organizationRole = "ORG_ADMIN"
             }
 
             const salt = await bcrypt.genSalt()
             const encryptedPassword = await bcrypt.hash(password, salt);
 
-            const CreatedNewUserServiceResult = await CreateNewUserService(fullName, email, encryptedPassword, organizationId);
+            const CreatedNewUserServiceResult = await CreateNewUserService(fullName, email, encryptedPassword, organizationId,organizationRole);
 
             if (!CreatedNewUserServiceResult) {
                 return res.status(400).json({
@@ -149,7 +151,7 @@ const SigninController = async (req, res) => {
             })
         }
 
-        const {fullName, email: emailInDB, password: passwordInDB, organizationId, _id} = isUserPresentUsingEmailServiceResult.data;
+        const {fullName, email: emailInDB, password: passwordInDB, organizationId, _id, role} = isUserPresentUsingEmailServiceResult.data;
 
         const passwordCheck = await bcrypt.compare(password,passwordInDB);
 
@@ -163,7 +165,8 @@ const SigninController = async (req, res) => {
         // generate token for the user, and return back the token to the user
 
         const payload = {
-            userId: _id
+            userId: _id,
+            role: role
         }
 
         const token = await jwt.sign(payload,JWT_SECRET_KEY, {
