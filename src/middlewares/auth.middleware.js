@@ -27,8 +27,8 @@ const AuthenticationMiddleware = async (req, res, next) => {
     }
 }
 
-const AuthorizationMiddleware = async (role) => {
-    return (req, res, next) => {
+const AuthorizationMiddleware = (role) => {
+    return async (req, res, next) => {
         try {
             if (req.role === role) {
                 next()

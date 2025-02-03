@@ -70,7 +70,7 @@ const DeleteUserByUserIdController = async(req,res) => {
 
         const organizationIdOfUerToDelete = (await findUserByItsUserId(userIdToDelete)).data.organizationId
 
-        if(organizationIdOfAdmin !== organizationIdOfUerToDelete){
+        if(!organizationIdOfAdmin.equals(organizationIdOfUerToDelete)){
             return res.status(403).json({
                 message: "You are not authorized to delete this user",
                 success: false
